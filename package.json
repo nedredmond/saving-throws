@@ -1,4 +1,16 @@
 {
+  "name": "saving-throws",
+  "version": "0.0.1",
+  "description": "Save your throws",
+  "author": "Ned Redmond",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nedredmond/saving-throws"
+  },
+  "bugs": {
+    "url": "https://github.com/nedredmond/saving-throws/issues"
+  },
+  "homepage": "https://github.com/nedredmond/saving-throws",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
