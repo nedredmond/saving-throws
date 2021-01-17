@@ -9,30 +9,31 @@ export default function RollBuilder() {
   const [diceListString, setString] = useState('');
   const [totalResult, setTotalResult] = useState(0);
   const [resultsList, setResultsList] = useState<string[]>([]);
+  const [dieTypeCount, setDieTypeCount] = useState(0);
   const dieTypes = ["4", "6", "8", "10", "12", "20"]
-  let dieTypeCount: number = 0;
 
   useEffect(() => {
-    dieTypeCount = Object.keys(dice).length;
+    if (!dieTypeCount) {
+      setTotalResult(0);
+      setResultsList([]);
+    }
     let tempString = '';
+
+    let count = dieTypeCount;
     for (let die in dice) {
-      tempString = updateNotation(tempString, die);
+      tempString += `${dice[die]}d${die}`;
+      if (--count) {
+        tempString += "+";
+      }
     }
     setString(tempString);
   }, [dice])
-
-  function updateNotation(tempString: string, die: string) {
-    tempString += `${dice[die]}d${die}`;
-    if (--dieTypeCount) {
-      tempString += "+";
-    }
-    return tempString;
-  }
 
   function addDieToRoll(die: string) {
     let diceList = { ...dice };
     diceList[die] = diceList[die] ? ++diceList[die] : 1;
     setDice(diceList);
+    setDieTypeCount(Object.keys(diceList).length);
   }
 
   function removeDieFromRoll(die: string) {
@@ -42,6 +43,7 @@ export default function RollBuilder() {
       delete diceList[die];
     }
     setDice(diceList);
+    setDieTypeCount(Object.keys(diceList).length);
   }
 
   function rollDice() {
@@ -114,7 +116,7 @@ export default function RollBuilder() {
         {diceInTrayButtons}
       </View>
       <Button title="Roll!" onPress={() => rollDice()} />
-      <View style={{flex: 1}}>
+      <View style={{ flex: 1 }}>
         <Text style={styles.title}>{totalResult > 0 && `Result: ${totalResult}`}</Text>
         <Text>{resultsList.join(', ')}</Text>
         <Text style={styles.title}></Text>
