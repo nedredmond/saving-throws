@@ -1,34 +1,61 @@
-import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from 'react';
 import { Button, StyleSheet } from 'react-native';
 import { MonoText } from './StyledText';
-import { Text, TextInput, View } from './Themed';
+import { Text, View } from './Themed';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function RollBuilder() {
-  const [text, setText] = useState<string>();
-  const [result, setResult] = useState('Nothing yet.');
   const [dice, setDice] = useState<{ [key: string]: number }>({});
   const [diceListString, setString] = useState('');
-  const regex = /^(\d*)d(\d+|\%)(([\+\-\/\*bw])(\d+))?(([\+\-\/\*])(\d+|(\d*)d(\d+|\%)(([\+\-\/\*bw])(\d+))?))*$/;
+  const [totalResult, setTotalResult] = useState(0);
+  const [resultsList, setResultsList] = useState<string[]>([]);
+  const dieTypes = ["4", "6", "8", "10", "12", "20"]
+  let dieTypeCount: number = 0;
 
   useEffect(() => {
-    if (text) {
-      // const parsedResult = parseDiceNotation(text)
+    dieTypeCount = Object.keys(dice).length;
+    let tempString = '';
+    for (let die in dice) {
+      tempString = updateNotation(tempString, die);
     }
-    if (Object.keys(dice).length) {
-      let tempString = '';
-      for (let die in dice) {
-        console.log(die);
-        tempString += die.repeat(dice[die]);
-      }
-      setString(tempString);
-    }
-  })
+    setString(tempString);
+  }, [dice])
 
-  function addDieToRoll(sides: string) {
+  function updateNotation(tempString: string, die: string) {
+    tempString += `${dice[die]}d${die}`;
+    if (--dieTypeCount) {
+      tempString += "+";
+    }
+    return tempString;
+  }
+
+  function addDieToRoll(die: string) {
     let diceList = { ...dice };
-    diceList[sides] = diceList[sides] ? ++diceList[sides] : 1;
+    diceList[die] = diceList[die] ? ++diceList[die] : 1;
     setDice(diceList);
+  }
+
+  function removeDieFromRoll(die: string) {
+    let diceList = { ...dice };
+    diceList[die] = --diceList[die];
+    if (!diceList[die]) {
+      delete diceList[die];
+    }
+    setDice(diceList);
+  }
+
+  function rollDice() {
+    let diceArray: number[] = []
+    for (let die in dice) {
+      const dieArray = Array(dice[die]).fill(parseInt(die));
+      diceArray = [...diceArray, ...dieArray];
+    }
+
+    const resultsArray = diceArray.map(die => [die, Math.floor(Math.random() * die) + 1])
+    setResultsList(resultsArray.map(([sides, result]) => `[${sides}]: ${result}`));
+
+    const totalResult = resultsArray.reduce((total, dieResult) => total + dieResult[1], 0)
+    setTotalResult(totalResult);
   }
 
   // function parseDiceNotation(notation: string) {
@@ -48,36 +75,51 @@ export default function RollBuilder() {
   // setResult(/^((\d+)?[dD](\d+)\s?)+([+-]\d+)?$/.exec(notation)?.toString() || 'Hella');
   // }
 
-  return (
-    <View>
-      <View style={styles.diceRollerContainer}>
-        <TextInput
-          onChangeText={value => setText(value)}
-          value={text}
-          placeholder="Enter dice notation (bitch)" />
-        <View
-          style={[styles.codeHighlightContainer, styles.homeScreenFilename]}
-          darkColor="rgba(255,255,255,0.05)"
-          lightColor="rgba(0,0,0,0.05)">
-          <Button
-            title="20"
-            onPress={() => addDieToRoll("20")}
-          />
-          <Button
-            title="6"
-            onPress={() => addDieToRoll("6")}
-          />
-          <Text style={styles.title}>Your Roll, Bitch:</Text>
-          <MonoText>{diceListString}</MonoText>
-        </View>
-      </View>
+  const addDieButtons = dieTypes.map((die, i) =>
+    <View key={die} style={{ marginRight: i === die.length - 1 ? 0 : 1 }}>
+      <MaterialCommunityIcons.Button
+        name={`dice-d${die}` as any}
+        onPress={() => addDieToRoll(die)}
+      >+</MaterialCommunityIcons.Button>
     </View>
   );
-}
 
-function handleHelpPress() {
-  WebBrowser.openBrowserAsync(
-    'https://docs.expo.io/get-started/create-a-new-app/#opening-the-app-on-your-phonetablet'
+  const diceInTrayButtons = Object.keys(dice).map((die =>
+    <View key={die} style={{ margin: 10, backgroundColor: '#656565' }}>
+      <MaterialCommunityIcons.Button
+        name={`dice-d${die}` as any}
+        onPress={() => removeDieFromRoll(die)}
+      >{dice[die].toString()}</MaterialCommunityIcons.Button>
+    </View>
+  ));
+
+  return (
+    <View style={styles.diceRollerContainer}>
+      <View style={styles.buttonRow}>
+        {addDieButtons}
+      </View>
+      <View
+        style={[styles.codeHighlightContainer, styles.homeScreenFilename]}
+        darkColor="rgba(255,255,255,0.05)"
+        lightColor="rgba(0,0,0,0.05)">
+        <Text style={styles.title}>Your Heckin' Roll:</Text>
+        <MonoText>{diceListString}</MonoText>
+      </View>
+      <View
+        style={{
+          flex: 1, backgroundColor: '#656565', borderRadius: 4,
+          flexDirection: 'row',
+          flexWrap: 'wrap'
+        }}>
+        {diceInTrayButtons}
+      </View>
+      <Button title="Roll!" onPress={() => rollDice()} />
+      <View style={{flex: 1}}>
+        <Text style={styles.title}>{totalResult > 0 && `Result: ${totalResult}`}</Text>
+        <Text>{resultsList.join(', ')}</Text>
+        <Text style={styles.title}></Text>
+      </View>
+    </View>
   );
 }
 
@@ -86,6 +128,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
   developmentModeText: {
     marginBottom: 20,
     fontSize: 14,
@@ -93,7 +139,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   title: {
-    fontSize: 20,
+    fontSize: 40,
     fontWeight: 'bold',
   },
   contentContainer: {
@@ -112,8 +158,8 @@ const styles = StyleSheet.create({
     marginLeft: -10,
   },
   diceRollerContainer: {
-    alignItems: 'center',
-    marginHorizontal: 50,
+    flex: 1,
+    maxWidth: '80%'
   },
   homeScreenFilename: {
     marginVertical: 7,
