@@ -1,15 +1,16 @@
 import * as React from 'react';
 import { StyleSheet } from 'react-native';
+import RollBuilder from '../components/RollBuilder';
 
-import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
 
 export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
+      <Text style={styles.title}>Hey Lana Baby</Text>
+      <Text>I've got a "working app"</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="/screens/TabOneScreen.tsx" />
+      <RollBuilder />
     </View>
   );
 }
