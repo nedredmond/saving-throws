@@ -6,9 +6,9 @@ export default {
     screens: {
       Root: {
         screens: {
-          TabOne: {
+          RollBuilder: {
             screens: {
-              TabOneScreen: 'one',
+              RollBuilderScreen: 'roller',
             },
           },
           TabTwo: {

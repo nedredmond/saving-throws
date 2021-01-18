@@ -4,7 +4,7 @@ import RollBuilder from '../components/RollBuilder';
 
 import { Text, View } from '../components/Themed';
 
-export default function TabOneScreen() {
+export default function RollBuilderScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Build That Roll, Brother</Text>

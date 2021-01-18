@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Button, StyleSheet } from 'react-native';
+import { Button, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { MonoText } from './StyledText';
-import { Text, View } from './Themed';
+import { Text, useThemeColor, View } from './Themed';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { transform } from '@babel/core';
 
 export default function RollBuilder() {
   const [dice, setDice] = useState<{ [key: string]: number }>({});
@@ -10,7 +11,14 @@ export default function RollBuilder() {
   const [totalResult, setTotalResult] = useState(0);
   const [resultsList, setResultsList] = useState<string[]>([]);
   const [dieTypeCount, setDieTypeCount] = useState(0);
-  const dieTypes = ["4", "6", "8", "10", "12", "20"]
+  const dieTypes = ["4", "6", "8", "10", "12", "20"];
+  const themedTextColor = useThemeColor({ light: "black", dark: "white" }, 'text');
+  const inputBackgroundColor = useThemeColor({ light: "rgba(0,0,0,0.05)", dark: "rgba(255,255,255,0.05)" }, 'background');
+
+  function clear() {
+    setDice({});
+    setDieTypeCount(0);
+  }
 
   useEffect(() => {
     if (!dieTypeCount) {
@@ -79,48 +87,74 @@ export default function RollBuilder() {
 
   const addDieButtons = dieTypes.map((die, i) =>
     <View key={die} style={{ marginRight: i === die.length - 1 ? 0 : 1 }}>
-      <MaterialCommunityIcons.Button
-        name={`dice-d${die}` as any}
+      <TouchableOpacity
         onPress={() => addDieToRoll(die)}
-      >+</MaterialCommunityIcons.Button>
+        style={styles.button}>
+        <MaterialCommunityIcons
+          name={`dice-d${die}-outline` as any}
+          color={themedTextColor}
+          style={styles.title}
+        />
+      </TouchableOpacity>
     </View>
   );
 
   const diceInTrayButtons = Object.keys(dice).map((die =>
-    <View key={die} style={{ margin: 10, backgroundColor: '#656565' }}>
-      <MaterialCommunityIcons.Button
-        name={`dice-d${die}` as any}
-        onPress={() => removeDieFromRoll(die)}
-      >{dice[die].toString()}</MaterialCommunityIcons.Button>
+    <View key={die}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', margin: 5 }}>
+        <TouchableOpacity
+          onPress={() => removeDieFromRoll(die)}
+          onLongPress={() => removeDieFromRoll(die)}
+        >
+          <MaterialCommunityIcons
+            name={`dice-d${die}` as any}
+            color={themedTextColor}
+            style={[styles.title, {}]}
+          />
+        </TouchableOpacity>
+        {dice[die] > 1 &&
+          <View style={{ flexDirection: 'row' }}>
+            <Text style={styles.count}>×</Text>
+            <TextInput style={styles.count}>
+              {dice[die]}
+            </TextInput>
+          </View>
+        }
+      </View>
     </View>
   ));
 
   return (
     <View style={styles.diceRollerContainer}>
+      <Text>Tap dice to add to your roll:</Text>
       <View style={styles.buttonRow}>
         {addDieButtons}
       </View>
-      <View
-        style={[styles.codeHighlightContainer, styles.homeScreenFilename]}
-        darkColor="rgba(255,255,255,0.05)"
-        lightColor="rgba(0,0,0,0.05)">
-        <Text style={styles.title}>Your Heckin' Roll:</Text>
-        <MonoText>{diceListString}</MonoText>
-      </View>
-      <View
-        style={{
-          flex: 1, backgroundColor: '#656565', borderRadius: 4,
-          flexDirection: 'row',
-          flexWrap: 'wrap'
-        }}>
-        {diceInTrayButtons}
-      </View>
-      <Button title="Roll!" onPress={() => rollDice()} />
-      <View style={{ flex: 1 }}>
-        <Text style={styles.title}>{totalResult > 0 && `Result: ${totalResult}`}</Text>
-        <Text>{resultsList.join(', ')}</Text>
-        <Text style={styles.title}></Text>
-      </View>
+      {dieTypeCount > 0 &&
+        <View>
+          <TextInput
+            style={[styles.codeHighlightContainer, styles.homeScreenFilename, { backgroundColor: inputBackgroundColor, fontFamily: 'space-mono' }]}>
+            {diceListString}
+          </TextInput>
+          <View
+            style={{
+              flex: 0,
+              flexDirection: 'row',
+              flexWrap: 'wrap'
+            }}>
+            {diceInTrayButtons}
+          </View>
+          <View style={{ flexDirection: 'row' }}>
+            <Button title="Roll!" onPress={() => rollDice()} />
+            <Button title="Clear!" onPress={() => clear()} color="red" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title}>{totalResult > 0 && `Result: ${totalResult}`}</Text>
+            <Text>{resultsList.join(', ')}</Text>
+            <Text style={styles.title}></Text>
+          </View>
+        </View>
+      }
     </View>
   );
 }
@@ -129,6 +163,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  button: {
+    padding: 5,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -143,6 +180,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 40,
     fontWeight: 'bold',
+  },
+  count: {
+    fontSize: 30,
+    fontWeight: 'bold'
   },
   contentContainer: {
     paddingTop: 30,
@@ -161,7 +202,7 @@ const styles = StyleSheet.create({
   },
   diceRollerContainer: {
     flex: 1,
-    maxWidth: '80%'
+    width: '95%'
   },
   homeScreenFilename: {
     marginVertical: 7,
