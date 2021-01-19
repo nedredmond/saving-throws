@@ -44,6 +44,22 @@ export default function RollBuilder() {
     setDieTypeCount(Object.keys(diceList).length);
   }
 
+  function setDieAmount(die: string, amount: string) {
+    if (!amount) return;
+    const amountInt = parseInt(amount);
+    if (isNaN(amountInt)) return;
+
+    let diceList = { ...dice };
+    if (!amountInt) {
+      delete diceList[die];
+    } else {
+      diceList[die] = amountInt;
+    }
+
+    setDice(diceList);
+    setDieTypeCount(Object.keys(diceList).length);
+  }
+
   function removeDieFromRoll(die: string) {
     let diceList = { ...dice };
     diceList[die] = --diceList[die];
@@ -86,6 +102,7 @@ export default function RollBuilder() {
   // }
 
   const addDieButtons = dieTypes.map((die, i) =>
+
     <View key={die} style={{ marginRight: i === die.length - 1 ? 0 : 1 }}>
       <TouchableOpacity
         onPress={() => addDieToRoll(die)}
@@ -99,8 +116,8 @@ export default function RollBuilder() {
     </View>
   );
 
-  const diceInTrayButtons = Object.keys(dice).map((die =>
-    <View key={die}>
+  const diceInTrayButtons = Object.keys(dice).map((die => {
+    return <View key={die}>
       <View style={{ flexDirection: 'row', alignItems: 'center', margin: 5 }}>
         <TouchableOpacity
           onPress={() => removeDieFromRoll(die)}
@@ -115,14 +132,16 @@ export default function RollBuilder() {
         {dice[die] > 1 &&
           <View style={{ flexDirection: 'row' }}>
             <Text style={styles.count}>×</Text>
-            <TextInput style={styles.count}>
-              {dice[die]}
-            </TextInput>
+            <TextInput
+              style={[styles.count, { width: 50 }]}
+              onBlur={event => setDieAmount(die, event.nativeEvent.text)}
+              placeholder={`${dice[die]}`}
+              placeholderTextColor={themedTextColor} />
           </View>
         }
       </View>
     </View>
-  ));
+  }));
 
   return (
     <View style={styles.diceRollerContainer}>
@@ -133,9 +152,11 @@ export default function RollBuilder() {
       {dieTypeCount > 0 &&
         <View>
           <TextInput
-            style={[styles.codeHighlightContainer, styles.homeScreenFilename, { backgroundColor: inputBackgroundColor, fontFamily: 'space-mono' }]}>
-            {diceListString}
-          </TextInput>
+            style={[
+              styles.codeHighlightContainer,
+              styles.homeScreenFilename,
+              { backgroundColor: inputBackgroundColor, fontFamily: 'space-mono' }]}
+            value={diceListString} />
           <View
             style={{
               flex: 0,
