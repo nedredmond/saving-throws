@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { Button, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { MonoText } from './StyledText';
 import { Text, useThemeColor, View } from './Themed';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,7 +9,7 @@ export default function RollBuilder() {
   const [dice, setDice] = useState<{ [key: string]: number }>({});
   const [diceListString, setString] = useState('');
   const [totalResult, setTotalResult] = useState(0);
-  const [resultsList, setResultsList] = useState<string[]>([]);
+  const [resultsList, setResultsList] = useState<{ result: string, critStat: string }[]>([]);
   const [dieTypeCount, setDieTypeCount] = useState(0);
   const dieTypes = ["4", "6", "8", "10", "12", "20"];
   const themedTextColor = useThemeColor({ light: "black", dark: "white" }, 'text');
@@ -78,11 +78,29 @@ export default function RollBuilder() {
     }
 
     const resultsArray = diceArray.map(die => [die, Math.floor(Math.random() * die) + 1])
-    setResultsList(resultsArray.map(([sides, result]) => `[${sides}]: ${result}`));
+    setResultsList(
+      resultsArray.map(([sides, result]) => {
+        return {
+          result: `[${sides}]: ${result}`,
+          critStat: (sides == result) ? 'c' : (result == 1) ? 'f' : ''
+        }
+      }));
 
     const totalResult = resultsArray.reduce((total, dieResult) => total + dieResult[1], 0)
     setTotalResult(totalResult);
   }
+
+  function getThemedCritColor(critStat: string) {
+    if (critStat === 'c') {
+      return themedTextColor === 'black' ? '#2e8540' : '#01FF70'
+    } else if (critStat === 'f') {
+      return themedTextColor === 'black' ? '#cd2026' : '#FF4136'
+    } else {
+      return themedTextColor
+    }
+  }
+
+  const separator = <Text>, </Text>;
 
   // function parseDiceNotation(notation: string) {
   // const parts = notation.split('+');
@@ -129,14 +147,18 @@ export default function RollBuilder() {
             style={[styles.title, {}]}
           />
         </TouchableOpacity>
-        {dice[die] > 1 &&
+        {dice[die] > 0 &&
           <View style={{ flexDirection: 'row' }}>
             <Text style={styles.count}>×</Text>
-            <TextInput
-              style={[styles.count, { width: 50 }]}
-              onBlur={event => setDieAmount(die, event.nativeEvent.text)}
-              placeholder={`${dice[die]}`}
-              placeholderTextColor={themedTextColor} />
+            <ScrollView keyboardShouldPersistTaps='handled'>
+              <TextInput
+                keyboardType='numeric'
+                style={[styles.count, { width: 52, color: themedTextColor }]}
+                onBlur={event => setDieAmount(die, event.nativeEvent.text)}
+                onSubmitEditing={event => setDieAmount(die, event.nativeEvent.text)}
+                placeholder={`${dice[die]}`}
+                placeholderTextColor={themedTextColor} />
+            </ScrollView>
           </View>
         }
       </View>
@@ -155,7 +177,11 @@ export default function RollBuilder() {
             style={[
               styles.codeHighlightContainer,
               styles.homeScreenFilename,
-              { backgroundColor: inputBackgroundColor, fontFamily: 'space-mono' }]}
+              {
+                backgroundColor: inputBackgroundColor,
+                fontFamily: 'space-mono',
+                color: themedTextColor
+              }]}
             value={diceListString} />
           <View
             style={{
@@ -170,9 +196,22 @@ export default function RollBuilder() {
             <Button title="Clear!" onPress={() => clear()} color="red" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>{totalResult > 0 && `Result: ${totalResult}`}</Text>
-            <Text>{resultsList.join(', ')}</Text>
-            <Text style={styles.title}></Text>
+            {totalResult > 0 &&
+              <View>
+                <Text style={styles.title}>{totalResult > 0 && `Result: ${totalResult}`}</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                  {resultsList.map<JSX.Element>(
+                    ({ result, critStat }, i) => <Text
+                      style={{
+                        color: getThemedCritColor(critStat), fontWeight: critStat === '' ? 'normal' : 'bold'
+                      }}
+                      key={i}>
+                      {result + (resultsList.length - 1 === i ? '' : ', ')}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            }
           </View>
         </View>
       }
